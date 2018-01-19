@@ -33,9 +33,9 @@ def main():
     xs, ys = generate_data(0, 5, ndata, 1, 1, lambda x: x**2)
 
     # Split into training/test data
-    p = np.random.permutation(xs.shape[0])
-    xs = xs[p]
-    ys = ys[p]
+    # p = np.random.permutation(xs.shape[0])
+    # xs = xs[p]
+    # ys = ys[p]
     xs_train = xs[:int(ndata*0.8)]
     ys_train = ys[:int(ndata*0.8)]
     xs_test = xs[int(ndata*0.8):]
@@ -52,7 +52,7 @@ def main():
     for l, e in zip(learners, errors_test):
         print('Error ({}): {}'.format(l.describe(), e))
 
-    # Plot x and y values from training data, as well as learned function
+    # Plot x and y values from test and training data, as well as learned function
     plt.subplot(211)
     plt.plot(xs_train, ys_train, 'bo')
     plt.plot(xs_test, ys_test, 'ro')
