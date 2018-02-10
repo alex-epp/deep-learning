@@ -17,7 +17,7 @@ class MatMul:
     '''
     def __init__(self, weights):
         self.weights = np.matrix(weights)
-        self.i = 0
+        self.i = None
 
     def eval(self, i):
         self.i = i
