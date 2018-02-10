@@ -168,7 +168,7 @@ class MLP:
             raise RuntimeError("Invalid linkage: curr_shape = {}, output_shape = {}" \
                                .format(curr_shape, output_shape))
         
-        cur_shape = output_shape[::-1]
+        curr_shape = output_shape[::-1]
         # Check back propagation shape
         for op in reversed(self.operations):
             if op.jacobian().shape[0] is not curr_shape[1]:
