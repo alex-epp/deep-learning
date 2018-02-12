@@ -37,6 +37,7 @@ class MatMul:
                 grad[i,j] = J[0,i] * self.i[j,0]
                 
         self.weights = self.weights - grad * learning_rate
+        #self.weights = np.clip(self.weights, -1, 1)
 
 class VecAdd:
     '''
@@ -74,6 +75,7 @@ class VecAdd:
     
     def grad_descent(self, J, learning_rate):
         self.bias = self.bias - (J*self.jacobian()).T * learning_rate
+        #self.bias = np.clip(self.bias, -1, 1)
 
 class Rectify:
     '''
