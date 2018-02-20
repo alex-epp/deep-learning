@@ -16,7 +16,7 @@ X = np.matrix([[0, 0],
 y = np.apply_along_axis(lambda x: w.T*np.maximum(0, W.T*x.T+c)+b,
                           axis=1,
                           arr=X,
-                          ).T
+                          )
 
 # Print examples with solutions
 for i in range(4):
