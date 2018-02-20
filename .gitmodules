@@ -1,0 +1,3 @@
+[submodule "exercises/tensorflow-waves/waves"]
+	path = exercises/tensorflow-waves/waves
+	url = https://github.com/alex-epp/waves
