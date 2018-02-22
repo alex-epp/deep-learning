@@ -35,8 +35,8 @@ Y = np.matrix([[0],
 
 # Train
 bar = progressbar.ProgressBar()
-for _ in bar(range(1000)):
-    mlp.backprop(X, Y, 0.01)
+for _ in bar(range(100)):
+    mlp.backprop(X, Y, 0.1)
 
 # Print examples with solutions
 for x in X:
