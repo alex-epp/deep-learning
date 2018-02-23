@@ -1,6 +1,6 @@
 # Adaptive Learning Rates
 
-Implements the adaptive learning rates presented in 8.5:
+Implements the adaptive learning rate methods presented in 8.5:
  * AdaGrad
  * RMSProp
  * RMSProp with momentum
