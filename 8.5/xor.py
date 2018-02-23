@@ -28,10 +28,8 @@ Y = np.matrix([[0],
                [0]])
 
 # Train
-bar = progressbar.ProgressBar()
-grad_descent = MLP.ClippedGradDescent(.1)
-for _ in bar(range(100)):
-    mlp.backprop(X, Y, grad_descent)
+trainer = MLP.MLPTrainer(1000, 1, MLP.Adam())
+trainer.backprop(X, Y, mlp)
 
 # Print examples with solutions
 for x in X:

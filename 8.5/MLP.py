@@ -1,4 +1,5 @@
 import numpy.matlib as np
+import progressbar
 
 class MatMul:
     '''
@@ -134,14 +135,14 @@ class SimpleGradDescent:
         self.learning_rate = learning_rate
     
     def update(self, op, grad):
-        op.value = op.value - grad * self.learning_rate
+        return -grad * self.learning_rate
 
 class ClippedGradDescent:
     def __init__(self, learning_rate):
         self.learning_rate = learning_rate
     
     def update(self, op, grad):
-        op.value = op.value - np.clip(grad, -1, 1) * self.learning_rate
+        return - np.clip(grad, -1, 1) * self.learning_rate
 
 class Momentum:
     def __init__(self, learning_rate, momentum):
@@ -152,7 +153,7 @@ class Momentum:
     def update(self, op, grad):
         grad = np.clip(grad, -1, 1)
         self.v[op] = self.v.get(op, 0)*self.momentum - self.learning_rate*grad
-        op.value = op.value + self.v[op]
+        return self.v[op]
 
 class AdaGrad:
     def __init__(self, learning_rate):
@@ -164,7 +165,7 @@ class AdaGrad:
         grad = np.clip(grad, -1, 1)
         self.r[op] = self.r.get(op, 0) + np.square(grad)
         update = np.divide(self.learning_rate*grad, self.e + np.sqrt(self.r[op]))
-        op.value = op.value - update
+        return -update
 
 class RMSProp:
     def __init__(self, learning_rate, decay_rate):
@@ -177,7 +178,7 @@ class RMSProp:
         self.r[op] = (self.r.get(op, 0) * self.decay_rate
                     + np.square(grad) * (1-self.decay_rate))
         update = np.divide(self.learning_rate*grad, self.e + np.sqrt(self.r[op]))
-        op.value = op.value - update
+        return -update
 
 class RMSPropNesterov:
     def __init__(self, learning, decay, momentum):
@@ -191,12 +192,10 @@ class RMSPropNesterov:
     def update(self, op, grad):
         r = self.r.get(op, 0)
         v = self.v.get(op, 0)
-        # Accumulate gradient
         self.r[op] = r * self.decay + np.square(grad) * (1-self.decay)
-        # Compute velocity update
         vupdate = np.divide(self.learning*grad, self.e + np.sqrt(self.r[op]))
         self.v[op] = self.momentum*v - vupdate
-        op.value = op.value + self.v[op]
+        return self.v[op]
 
 class Adam:
     def __init__(self, e=0.001, p1=0.9, p2=0.999):
@@ -217,7 +216,7 @@ class Adam:
         sc = self.s[op]/(1-self.p1**self.t)
         rc = self.r[op]/(1-self.p2**self.t)
         update = -np.divide(self.e*sc, self.d+np.sqrt(rc))
-        op.value = op.value + update
+        return update
 
 class MLP:
     '''
@@ -289,20 +288,97 @@ class MLP:
         
         return out
     
-    def backprop(self, Xs, Ys, descent_obj):
-        for i in np.random.permutation(len(Xs)):
+    def error(self, Xs, Ys):
+        return np.sum((np.array([self.eval(x.T) for x in Xs]) - Ys)**2)
+
+    def backprop_batch(self, Xs, Ys, descent_obj):
+        gradmap = {}
+        for i in range(len(Xs)):
             X = np.matrix(Xs[i]).T
             Y = np.matrix(Ys[i]).T
-            self.backprop_example(X, Y, descent_obj)
+            self.backprop_example(X, Y, gradmap)
         
-    def backprop_example(self, X, Y, descent_obj):
+        self.grad_update(gradmap, descent_obj)
+    
+    def grad_update(self, gradmap, descent_obj):
+        for op, grads in gradmap.items():
+            grad = sum(grads) / len(grads)
+            op.value = op.value + descent_obj.update(op, grad)
+        
+    def backprop_example(self, X, Y, gradmap):
         J = self.eval(X) - Y
         for op in reversed(self.operations):
             grad = op.self_grad(J)
             if grad is not None:
-                descent_obj.update(op, grad)
+                if op in gradmap:
+                    gradmap[op].append(grad)
+                else:
+                    gradmap[op] = [grad]
+                
             J = J * op.jacobian()
-            
+
+
+class FixedStopping:
+    def __init__(self, num_epochs):
+        self.num_epochs = num_epochs
+    
+    def epochs(self, mlp):
+        bar = progressbar.ProgressBar()
+        for i in bar(range(self.num_epochs)):
+            yield i
+    
+class EarlyStopping:
+    def __init__(self, resolution, patience, max_epochs, Xs, Ys):
+        self.resolution = resolution
+        self.patience = patience
+        self.max_epochs = max_epochs
+        self.best_mlp = MLP()
+        self.Xs = Xs
+        self.Ys = Ys
+    
+    def epochs(self, mlp):
+        i = 0
+        errors = 0
+        min_err = np.Infinity
+        bar = progressbar.ProgressBar(max_value=self.max_epochs)
+        while errors < self.patience and i < self.max_epochs:
+            for j in range(self.resolution):
+                yield i+j
+                bar.update(i)
+                i += 1
+
+            err = mlp.error(self.Xs, self.Ys)
+            if err < min_err:
+                errors = 0
+                self.best_mlp.__dict__ = mlp.__dict__.copy()
+                min_err = err
+            else:
+                errors += 1
+        
+        mlp.__dict__ = self.best_mlp.__dict__.copy()
+
+
+class MLPTrainer:
+    def __init__(self, batch_size, stopping_obj, descent_obj):
+        self.batch_size = batch_size
+        self.stopping_obj = stopping_obj
+        self.descent_obj = descent_obj
+    
+    def backprop(self, Xs, Ys, mlp):
+        for _ in self.stopping_obj.epochs(mlp):
+            indices = np.random.permutation(len(Xs))
+            initial_index = 0
+            final_index = self.batch_size
+            while initial_index is not final_index:
+                mlp.backprop_batch(
+                    Xs[indices[initial_index:final_index]],
+                    Ys[indices[initial_index:final_index]],
+                    self.descent_obj
+                    )
+                initial_index = final_index
+                final_index = min(initial_index+self.batch_size, Xs.shape[0])
+
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
