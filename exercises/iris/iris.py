@@ -5,11 +5,11 @@ import numpy.matlib as np
 
 def classid(name):
     if name == 'Iris-setosa':
-        return 0
+        return 0.
     elif name == 'Iris-versicolor':
-        return 1
+        return 1.
     elif name == 'Iris-virginica':
-        return 2
+        return 2.
     else:
         print('Unrecognized class: ', name)
 
@@ -30,7 +30,7 @@ xs = xs[p]
 ys = ys[p]
 
 # Split into test and training sets
-training_size = int(xs.shape[0]*100/80)
+training_size = int(xs.shape[0]*80/100)
 xs_train = xs[0:training_size]
 ys_train = ys[0:training_size]
 xs_test = xs[training_size:]
@@ -48,7 +48,8 @@ mlp.check_linkage((4,1))
 # Train
 stop = MLP.EarlyStopping(10, 20, 1000, xs_test, ys_test)
 grad_descent =  MLP.Adam()
-trainer = MLP.MLPTrainer(1, stop, grad_descent)
+cost = MLP.LeastSquares()
+trainer = MLP.MLPTrainer(1, stop, grad_descent, cost)
 trainer.backprop(xs_train, ys_train, mlp)
 
 # Check classification error

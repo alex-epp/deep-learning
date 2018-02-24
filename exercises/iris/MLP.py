@@ -127,8 +127,35 @@ class Rectify:
         return (self.n, self.n)
     
     def self_grad(self, J):
-        None
+        return None
     
+
+class SoftMax:
+    def __init__(self, n):
+        self.n = n
+        self.o = None
+    
+    def eval(self, i):
+        e = np.exp(i - np.amax(i))
+        self.o =  e / np.sum(e)
+        return self.o
+    
+    def jacobian(self):
+        if self.o is None:
+            return np.zeros((self.n, self.n))
+        
+        # Assign non-diagonal entries
+        J = -np.multiply(self.o, self.o.T)
+        # Correct diagonal entries
+        di = np.diag_indices_from(J)
+        J[di] = np.multiply(self.o.T, 1.-self.o.T)
+        return J
+    
+    def shape(self):
+        return (self.n, self.n)
+
+    def self_grad(self, J):
+        return None
 
 class SimpleGradDescent:
     def __init__(self, learning_rate):
@@ -218,6 +245,22 @@ class Adam:
         update = -np.divide(self.e*sc, self.d+np.sqrt(rc))
         return update
 
+class LeastSquares:
+    def cost_J(self, Yp, Y):
+        return  (Yp - Y).T
+    
+    def error_batch(self, Yps, Ys):
+        return np.sum(np.square(Yps - Ys))
+
+class SoftMaxCrossEntropy:
+    def cost_J(self, Yp, Y):
+        J = -np.divide(Y, Yp, out=Y, where=Yp!=0.).T
+        #print(J)
+        return J
+
+    def error_batch(self, Yp, Y):
+        return -np.sum(np.multiply(Y, np.log(Yp, out=Yp, where=Yp!=0.)))
+
 class MLP:
     '''
     >>> def rmat(n, m):
@@ -288,15 +331,19 @@ class MLP:
         
         return out
     
-    def error(self, Xs, Ys):
-        return np.sum((np.array([self.eval(x.T) for x in Xs]) - Ys)**2)
+    def eval_batch(self, Xs):
+        return np.apply_along_axis(
+            lambda x: self.eval(x.T).T,
+            1,
+            Xs
+        )
 
-    def backprop_batch(self, Xs, Ys, descent_obj):
+    def backprop_batch(self, Xs, Ys, descent_obj, cost_obj):
         gradmap = {}
         for i in range(len(Xs)):
             X = np.matrix(Xs[i]).T
             Y = np.matrix(Ys[i]).T
-            self.backprop_example(X, Y, gradmap)
+            self.backprop_example(X, Y, gradmap, cost_obj)
         
         self.grad_update(gradmap, descent_obj)
     
@@ -305,8 +352,8 @@ class MLP:
             grad = sum(grads) / len(grads)
             op.value = op.value + descent_obj.update(op, grad)
         
-    def backprop_example(self, X, Y, gradmap):
-        J = self.eval(X) - Y
+    def backprop_example(self, X, Y, gradmap, cost_obj):
+        J = cost_obj.cost_J(self.eval(X), Y)
         for op in reversed(self.operations):
             grad = op.self_grad(J)
             if grad is not None:
@@ -322,7 +369,7 @@ class FixedStopping:
     def __init__(self, num_epochs):
         self.num_epochs = num_epochs
     
-    def epochs(self, mlp):
+    def epochs(self, mlp, cost_obj):
         bar = progressbar.ProgressBar()
         for i in bar(range(self.num_epochs)):
             yield i
@@ -336,36 +383,38 @@ class EarlyStopping:
         self.Xs = Xs
         self.Ys = Ys
     
-    def epochs(self, mlp):
+    def epochs(self, mlp, cost_obj):
         i = 0
         errors = 0
         min_err = np.Infinity
         bar = progressbar.ProgressBar(max_value=self.max_epochs)
         while errors < self.patience and i < self.max_epochs:
             for j in range(self.resolution):
-                yield i+j
+                yield i
                 bar.update(i)
                 i += 1
 
-            err = mlp.error(self.Xs, self.Ys)
+            err = cost_obj.error_batch(mlp.eval_batch(self.Xs), self.Ys)
             if err < min_err:
                 errors = 0
                 self.best_mlp.__dict__ = mlp.__dict__.copy()
                 min_err = err
             else:
                 errors += 1
-        
+
+        bar.update(i)
         mlp.__dict__ = self.best_mlp.__dict__.copy()
 
 
 class MLPTrainer:
-    def __init__(self, batch_size, stopping_obj, descent_obj):
+    def __init__(self, batch_size, stopping_obj, descent_obj, cost_obj):
         self.batch_size = batch_size
         self.stopping_obj = stopping_obj
         self.descent_obj = descent_obj
+        self.cost_obj = cost_obj
     
     def backprop(self, Xs, Ys, mlp):
-        for _ in self.stopping_obj.epochs(mlp):
+        for _ in self.stopping_obj.epochs(mlp, self.cost_obj):
             indices = np.random.permutation(len(Xs))
             initial_index = 0
             final_index = self.batch_size
@@ -373,7 +422,8 @@ class MLPTrainer:
                 mlp.backprop_batch(
                     Xs[indices[initial_index:final_index]],
                     Ys[indices[initial_index:final_index]],
-                    self.descent_obj
+                    self.descent_obj,
+                    self.cost_obj
                     )
                 initial_index = final_index
                 final_index = min(initial_index+self.batch_size, Xs.shape[0])
