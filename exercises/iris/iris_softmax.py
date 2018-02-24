@@ -40,12 +40,18 @@ def main(debug=False):
     # Construct model
     mlp = MLP.MLP()
     w = 6
+    d = 1
     mlp.add_op(MLP.MatMul(utils.rmat(w, 4)))
     mlp.add_op(MLP.VecAdd(utils.rmat(w, 1)))
     mlp.add_op(MLP.Rectify(w))
+
+    for _ in range(d-1):
+        mlp.add_op(MLP.MatMul(utils.rmat(w, w)))
+        mlp.add_op(MLP.VecAdd(utils.rmat(w, 1)))
+        mlp.add_op(MLP.Rectify(w))
+
     mlp.add_op(MLP.MatMul(np.rand(3, w)))
     mlp.add_op(MLP.SoftMax(3))
-    mlp.check_linkage((4,1), (3,1))
 
     # Train
     stop = MLP.EarlyStopping(10, 10, 1000, xs_test, ys_test)

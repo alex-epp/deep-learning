@@ -26,8 +26,8 @@ class MatMul:
         self.i = i
         return self.value*i
     
-    def jacobian(self):
-        return self.value
+    def apply_jacobian(self, J):
+        return J * self.value
 
     def shape(self):
         '''Returns (size of output, size of input)'''
@@ -39,9 +39,12 @@ class MatMul:
         i.e. the effect of each element of the weights matrix on the
         output.
         '''
+        '''
         for i in range(self.grad.shape[0]):
             for j in range(self.grad.shape[1]):
                 self.grad[i,j] = J[0,i] * self.i[j,0]
+        '''
+        self.grad = np.multiply(J, self.i).T
         
         return self.grad
 
@@ -71,9 +74,8 @@ class VecAdd:
         self.i = i
         return i + self.value
     
-    def jacobian(self):
-        n = self.value.shape[0]
-        return np.eye(n)
+    def apply_jacobian(self, J):
+        return J
     
     def shape(self):
         '''Returns (size of output, size of input)'''
@@ -81,7 +83,7 @@ class VecAdd:
         return (n, n)
     
     def self_grad(self, J):
-        return (J*self.jacobian()).T
+        return J.T
 
         
 
@@ -114,13 +116,17 @@ class Rectify:
         self.o = np.maximum(0, i)
         return self.o
     
-    def jacobian(self):
-        J = np.zeros((self.n, self.n))
+    def apply_jacobian(self, J):
+        '''
+        self_J = np.zeros((self.n, self.n))
         if self.o is not None:
             for i in range(self.n):
-                J[i,i] = np.sign(self.o[i,0])
-            
-        return J
+                self_J[i,i] = np.sign(self.o[i,0])
+        
+        return J * self_J
+        '''
+        
+        return np.multiply(J, np.sign(self.o).T)
     
     def shape(self):
         '''Returns (size of output, size of input)'''
@@ -140,16 +146,16 @@ class SoftMax:
         self.o =  e / np.sum(e)
         return self.o
     
-    def jacobian(self):
+    def apply_jacobian(self, J):
         if self.o is None:
             return np.zeros((self.n, self.n))
         
         # Assign non-diagonal entries
-        J = -np.multiply(self.o, self.o.T)
+        self_J = -np.multiply(self.o, self.o.T)
         # Correct diagonal entries
-        di = np.diag_indices_from(J)
-        J[di] = np.multiply(self.o.T, 1.-self.o.T)
-        return J
+        di = np.diag_indices_from(self_J)
+        self_J[di] = np.multiply(self.o.T, 1.-self.o.T)
+        return J * self_J
     
     def shape(self):
         return (self.n, self.n)
@@ -295,6 +301,7 @@ class MLP:
     def check_linkage(self, input_shape, output_shape=(1, 1)):
         '''
         WARNING: untested with multiple outputs.
+        OTHER WARNING: currently broken
         '''
         curr_shape = input_shape
         # Check forward propagation shape
@@ -362,7 +369,7 @@ class MLP:
                 else:
                     gradmap[op] = [grad]
                 
-            J = J * op.jacobian()
+            J = op.apply_jacobian(J)
 
 
 class FixedStopping:
