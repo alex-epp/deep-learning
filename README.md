@@ -6,7 +6,7 @@ Code based on my progress through [this book](http://www.deeplearningbook.org) o
  * Closed-form MLP representation of XOR (6.1)
  * Backpropagation with stochastic gradient descent on a MLP (6.5)
  * Adaptive learning rates and early stopping (8.5)
- * Simple classifiers using the iris and mnist datasetse (examples)
+ * Simple classifiers using the iris and mnist datasets (examples)
 
 ### Screenshot:
 ![screenshot](6.5/sin.png)
