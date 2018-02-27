@@ -3,7 +3,6 @@ import utils
 
 import matplotlib.pyplot as plt
 import numpy.matlib as np
-import progressbar
 
 
 # Generate training data
@@ -24,16 +23,16 @@ mlp.add_op(MLP.MatMul(utils.rmat(w, 1)))
 mlp.add_op(MLP.VecAdd(utils.rmat(w, 1)))
 mlp.add_op(MLP.Rectify(w))
 mlp.add_op(MLP.MatMul(np.rand(1, w)))
-mlp.check_linkage((1,1))
+mlp.check_linkage((1, 1))
 
 # Train
 stop = MLP.EarlyStopping(10, 200, 10000, xs_test, ys_test)
-grad_descent =  MLP.Adam()
+grad_descent = MLP.Adam()
 trainer = MLP.MLPTrainer(1, stop, grad_descent)
 trainer.backprop(xs_train, ys_train, mlp)
 
 # Plot
 plt.plot(xs, ys, 'bo')
 xs = np.linspace(-10, 10, 10000)
-plt.plot(xs, [mlp.eval(x)[0,0] for x in xs], 'r')
+plt.plot(xs, [mlp.eval(x)[0, 0] for x in xs], 'r')
 plt.show()

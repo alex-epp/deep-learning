@@ -1,6 +1,5 @@
 import MLP
 import numpy.matlib as np
-import progressbar
 import utils
 
 # Construct model
@@ -28,7 +27,7 @@ Y = np.matrix([[0],
                [0]])
 
 # Train
-trainer = MLP.MLPTrainer(1000, 1, MLP.Adam())
+trainer = MLP.MLPTrainer(1, MLP.FixedStopping(1000), MLP.Adam())
 trainer.backprop(X, Y, mlp)
 
 # Print examples with solutions
