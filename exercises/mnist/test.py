@@ -8,13 +8,13 @@ def main():
     # Load model
     print('Loading model')
     mlp = MLP.MLP()
-    mlp.load(open('saves/mlp', 'rb'))
+    mlp.load(open('saves/mlp1', 'rb'))
 
     # Read data
     print('Reading data')
     _, _, _, _, te_i, _ = MLP.mnist.load()
 
-    '''
+    
     while True:
         ex = MLP.mnist.from_BMP('custom_data/digit.bmp')
         #MLP.mnist.visualize(ex)
@@ -23,7 +23,6 @@ def main():
         probability = probabilities[prediction,0]*100
         print('{} ({:.2f}%)'.format(prediction, probability))
         input()
-
     '''
     # Visualize elements
     while True:
@@ -36,7 +35,7 @@ def main():
             predictions.append(np.argmax(probabilities))
         print(*predictions)
         input()
-
+    '''
 
 if __name__ == "__main__":
     main()

@@ -8,7 +8,7 @@ import numpy.matlib as np
 def main():
     # Read data
     print('Reading data')
-    tr_i, tr_o, va_i, va_o, te_i, te_o = MLP.mnist.load()
+    tr_i, tr_o, va_i, va_o, te_i, te_o = MLP.mnist.load(augment=True)
     
     # Construct model
     print('Constructing model')
@@ -29,12 +29,12 @@ def main():
 
     # Train
     print('Training model')
-    stop = MLP.EarlyStopping(1, 10, 100, va_i, va_o)
+    stop = MLP.EarlyStopping(1, 15, 100, va_i, va_o)
     #stop = MLP.FixedStopping(100)
     grad_descent =  MLP.Adam()
     cost = MLP.SoftMaxCrossEntropy()
     visual = MLP.BarVisualizer()
-    reg = MLP.L2Regularization(.5/60000)
+    reg = MLP.L2Regularization(.5/1000)
     #visual = MLP.GraphVisualizer(tr_i, tr_o, va_i, va_o, cost)
     trainer = MLP.MLPTrainer(100, stop, grad_descent, cost, visual, reg)
     trainer.backprop(tr_i, tr_o, mlp)
@@ -52,7 +52,7 @@ def main():
 
     # Save classifier
     print('Saving model')
-    mlp.save(open('saves/mlp', 'wb'))
+    mlp.save(open('saves/mlp1', 'wb'))
 
 if __name__ == "__main__":
     main()
