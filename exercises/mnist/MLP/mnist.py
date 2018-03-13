@@ -95,6 +95,9 @@ def reformat(img):
 
 def from_BMP(filename):
     img = PIL.Image.open(filename)
+    return from_image(img)
+
+def from_image(img):
     img = reformat(img)
     img_array = np.matrix(img.getdata()).reshape(img.size[0] * img.size[1], -1)
     return img_array[:,0].T / 255
