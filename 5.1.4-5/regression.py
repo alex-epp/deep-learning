@@ -30,7 +30,7 @@ def generate_data(xmin, xmax, npoints, estddev, esize, f):
 def main():
     # Randomly generate data
     ndata = 100
-    xs, ys = generate_data(0, 5, ndata, 1, 1, lambda x: x**2)
+    xs, ys = generate_data(0, 5, ndata, 3, 3, lambda x: x**2)
 
     # Split into training/test data
     # p = np.random.permutation(xs.shape[0])
@@ -42,15 +42,15 @@ def main():
     ys_test = ys[int(ndata*0.8):]
 
     # Learn data function
-    learners = [polyfit.Polyfit(i, 0) for i in range(0, 6)]
+    learners = [polyfit.Polyfit(i, 0) for i in range(0, 4)]
     for l in learners:
         l.train(xs_train, ys_train)
     errors_test = [l.error(xs_test, ys_test) for l in learners]
     errors_train = [l.error(xs_train, ys_train) for l in learners]
 
     # Print errors calculated from test data
-    for l, e in zip(learners, errors_test):
-        print('Error ({}): {}'.format(l.describe(), e))
+    for l, e_train, e_test in zip(learners, errors_train, errors_test):
+        print('Error ({}): {}\t{}'.format(l.describe(), e_train, e_test))
 
     # Plot x and y values from test and training data, as well as learned function
     plt.subplot(211)
