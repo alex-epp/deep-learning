@@ -43,3 +43,5 @@ def classifier_error(classifier, test_inputs, test_outputs):
             failures.append((y, classifier.eval(x)))
     
     return err, failures
+
+
