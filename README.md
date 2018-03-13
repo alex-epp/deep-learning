@@ -8,8 +8,7 @@ Code based on my progress through [this book](http://www.deeplearningbook.org) o
  * Backpropagation with stochastic gradient descent on a MLP (6.5)
  * Adaptive learning rates and early stopping (8.5)
 
- ### Screenshot:
+ ### Screenshots:
  ![screenshot](exercises/mnist/capture.gif)
 
-### Screenshot:
 ![screenshot](6.5/sin.png)
