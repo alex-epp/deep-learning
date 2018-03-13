@@ -1,5 +1,4 @@
 import numpy.matlib as np
-import progressbar
 import pickle
 
 from MLP.op import MatMul
@@ -17,11 +16,11 @@ class L2Regularization:
 class FixedStopping:
     def __init__(self, num_epochs):
         self.max_epochs = num_epochs
-    
+
     def epochs(self, mlp, cost_obj):
         for i in range(self.max_epochs):
             yield i
-    
+
 
 class EarlyStopping:
     def __init__(self, resolution, patience, max_epochs, Xs, Ys):
@@ -31,7 +30,7 @@ class EarlyStopping:
         self.best_mlp = MLP()
         self.Xs = np.matrix(Xs, dtype=np.float32)
         self.Ys = np.matrix(Ys, dtype=np.float32)
-    
+
     def epochs(self, mlp, cost_obj):
         i = 0
         errors = 0
@@ -40,7 +39,7 @@ class EarlyStopping:
             for j in range(self.resolution):
                 i += 1
                 yield i
-                
+
 
             err = cost_obj.error_batch(mlp.eval_batch(self.Xs), self.Ys)
             if err < min_err:
@@ -56,18 +55,18 @@ class EarlyStopping:
 class MLP:
     def __init__(self):
         self.ops = []
-    
+
     def add_op(self, op):
         self.ops.append(op)
-    
+
     def eval(self, X):
         out = np.matrix(X, dtype=np.float32, copy=False)
 
         for op in self.ops:
             out = op.eval(out)
-        
+
         return out
-    
+
     def eval_batch(self, Xs):
         out = np.matrix(Xs, dtype=np.float32, copy=False)
 
@@ -76,10 +75,10 @@ class MLP:
             1,
             Xs
         )
-    
+
     def save(self, file):
         pickle.dump(self.ops, file)
-    
+
     def load(self, file):
         self.ops = pickle.load(file)
 
@@ -92,7 +91,7 @@ class MLPTrainer:
         self.cost_obj = cost_obj
         self.visual_obj = visual_obj
         self.reg_obj = reg_obj
-    
+
     def backprop(self, Xs, Ys, mlp):
         Xs = np.matrix(Xs, dtype=np.float32, copy=False)
         Ys = np.matrix(Ys, dtype=np.float32, copy=False)
@@ -114,9 +113,9 @@ class MLPTrainer:
                     )
                 initial_index = final_index
                 final_index = min(initial_index+self.batch_size, Xs.shape[0])
-                
+
                 self.visual_obj.update_minibatch(mlp)
-            
+
             self.visual_obj.update_epoch(mlp)
 
     def backprop_minibatch(self, mlp, Xs, Ys):
@@ -127,15 +126,15 @@ class MLPTrainer:
             X = np.matrix(Xs[i]).T
             Y = np.matrix(Ys[i]).T
             self.backprop_example(mlp, X, Y, grad_sums)
-        
+
         for i in range(len(mlp.ops)):
             if grad_sums[i] is not None:
                 grad = grad_sums[i] / minibatch_size
                 if self.reg_obj is not None:
                     mlp.ops[i].update(self.reg_obj.update(mlp.ops[i]))
-                
+
                 mlp.ops[i].update(self.descent_obj.update(mlp.ops[i], grad))
-        
+
     def backprop_example(self, mlp, X, Y, grad_sums):
         grad_upstream = self.cost_obj.grad(mlp.eval(X), Y)
         for i in reversed(range(len(mlp.ops))):

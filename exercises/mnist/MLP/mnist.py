@@ -3,8 +3,12 @@ import numpy.matlib as np
 import pandas
 import pickle
 import PIL
-import skimage.transform
-import scipy.ndimage.measurements
+try:
+    import skimage.transform
+    import scipy.ndimage.measurements
+except ImportError:
+    print("Error--cannot import scimage or scipy.ndimage: some MLP.mnist functionality may not work")
+
 
 def load(augment=False):
     '''
@@ -19,7 +23,7 @@ def load(augment=False):
 
     train_inputs = np.matrix(train_set[0], dtype=np.float32)
     train_outputs = np.matrix(pandas.get_dummies(train_set[1]).values, dtype=np.float32)
-    
+
     valid_inputs = np.matrix(valid_set[0], dtype=np.float32)
     valid_outputs = np.matrix(pandas.get_dummies(valid_set[1]).values, dtype=np.float32)
 
@@ -60,7 +64,7 @@ def visualize_batch(img_arrays):
         img_array = np.reshape(np.array(img_arrays[i]*255, dtype=np.uint8), (28, 28))
         img = PIL.Image.fromarray(img_array, 'L')
         total_img.paste(img, (28*i, 0))
-    
+
     total_img.show()
 
 def visualize(img_array):
@@ -70,7 +74,7 @@ def visualize(img_array):
 
 def reformat(img):
     img = img.crop(img.getbbox())
-    
+
     r = min(20/img.width, 20/img.height)
     img = img.resize(( int(img.width*r), int(img.height*r) ))
 

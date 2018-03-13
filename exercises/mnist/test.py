@@ -4,26 +4,25 @@ import utils
 
 import numpy.matlib as np
 
+
 def main():
     # Load model
     print('Loading model')
     mlp = MLP.MLP()
     mlp.load(open('saves/mlp1', 'rb'))
 
-    # Read data
-    print('Reading data')
-    _, _, _, _, te_i, _ = MLP.mnist.load()
-
-    
     while True:
         ex = MLP.mnist.from_BMP('custom_data/digit.bmp')
-        #MLP.mnist.visualize(ex)
+        # MLP.mnist.visualize(ex)
         probabilities = mlp.eval(ex.T)
         prediction = np.argmax(probabilities)
         probability = probabilities[prediction,0]*100
         print('{} ({:.2f}%)'.format(prediction, probability))
         input()
     '''
+    # Read data
+    print('Reading data')
+    _, _, _, _, te_i, _ = MLP.mnist.load()
     # Visualize elements
     while True:
         print('Predicting')
@@ -36,6 +35,7 @@ def main():
         print(*predictions)
         input()
     '''
+
 
 if __name__ == "__main__":
     main()
