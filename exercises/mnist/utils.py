@@ -31,6 +31,7 @@ def rmat(n, m):
     m = 2*np.rand(n, m) - np.ones((n, m))
     return m
 
+
 def classifier_error(classifier, test_inputs, test_outputs):
     failures = []
     err = 0
@@ -40,8 +41,8 @@ def classifier_error(classifier, test_inputs, test_outputs):
 
         if (y != np.around(classifier.eval(x))).any():
             err += 1
-            failures.append((y, classifier.eval(x)))
+            failures.append(x)
     
-    return err, failures
+    return err / test_inputs.shape[0], failures
 
 

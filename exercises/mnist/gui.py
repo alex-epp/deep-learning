@@ -96,8 +96,9 @@ def predict(mlp, img):
     return '{} ({:.2f}%)'.format(prediction, probability)
 
 
-mlp = MLP.MLP()
-mlp.load(open('saves/mlp1', 'rb'))
+filenames = ['saves/mlp{}'.format(i+1) for i in range(5)]
+ensemble = MLP.Ensemble()
+ensemble.load(open(n, 'rb') for n in filenames)
 
-dc = DrawingCanvas(200, 200, lambda image: predict(mlp, image))
+dc = DrawingCanvas(200, 200, lambda image: predict(ensemble, image))
 dc.loop()

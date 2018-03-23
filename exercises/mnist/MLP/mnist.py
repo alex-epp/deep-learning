@@ -40,8 +40,8 @@ def load(augment=False):
             test_inputs, test_outputs)
 
 def apply_augment(inputs, outputs):
-    new_inputs = np.matrix(inputs, copy=True)
-    new_outputs = np.matrix(outputs, copy=True)
+    new_inputs = np.concatenate((inputs, inputs))
+    new_outputs = np.concatenate((outputs, outputs))
 
     for i in range(new_inputs.shape[0]):
         angle = np.random.uniform(-45, 45)
