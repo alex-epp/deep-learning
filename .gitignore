@@ -1,3 +1,7 @@
+# Custom
+run.bat
+*.pyperf
+
 # vscode configuration
 .vscode/
 .vs/
