@@ -202,7 +202,7 @@ export class DrawingPadHolder extends React.Component {
         this.setState({drawing: true});
     }
 
-    mouse_move(x, y) {
+    mouse_move(x, y) {        
         if (this.last_x !== null && this.last_y !== null && this.is_mouse_down) {
             this.draw_line(x, y)
         }
@@ -221,6 +221,8 @@ export class DrawingPadHolder extends React.Component {
     }
 
     mouse_up(e) {
+        this.last_x = null
+        this.last_y = null
         this.is_mouse_down = false;
     }
 }
@@ -241,6 +243,7 @@ function Prediction(props) {
 class DrawingPad extends React.Component {
     constructor(props) {
         super(props);
+        this.touch_move = this.touch_move.bind(this);
         this.mouse_move = this.mouse_move.bind(this);
         this.on_resize = this.on_resize.bind(this);
         this.state = {width: 0, height: 200}
@@ -248,11 +251,18 @@ class DrawingPad extends React.Component {
 
     componentDidMount() {
         window.addEventListener('resize', this.on_resize, false);
+        ReactDOM.findDOMNode(this).addEventListener('touchstart', this.props.mouse_down, false);
+        ReactDOM.findDOMNode(this).addEventListener('touchend', this.props.mouse_up, false);
+        ReactDOM.findDOMNode(this).addEventListener('touchmove', this.touch_move, false);
+
         this.on_resize(null);
     }
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.on_resize, false);
+        ReactDOM.findDOMNode(this).removeEventListener('touchstart', this.props.mouse_down, false);
+        ReactDOM.findDOMNode(this).removeEventListener('touchend', this.props.mouse_up, false);
+        ReactDOM.findDOMNode(this).removeEventListener('touchmove', this.touch_move, false);
     }
 
     on_resize(e) {
@@ -276,5 +286,16 @@ class DrawingPad extends React.Component {
         var x_rel = e.clientX - rect.x
         var y_rel = e.clientY - rect.y
         this.props.mouse_move(x_rel, y_rel)
+    }
+
+    touch_move(e) {
+        e.preventDefault();
+        var rect = ReactDOM.findDOMNode(this).getBoundingClientRect()
+        var x_rel = e.touches[0].clientX - rect.x
+        var y_rel = e.touches[0].clientY - rect.y
+        if (x_rel >= 0 && x_rel <= rect.width
+                    && y_rel >= 0 && y_rel <= rect.height) {
+            this.props.mouse_move(x_rel, y_rel);
+        }
     }
 }
