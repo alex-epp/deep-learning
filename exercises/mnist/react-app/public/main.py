@@ -16,10 +16,8 @@ ensemble.load(open(n, 'rb') for n in filenames)
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    img_dict = request.get_json()
-    response = np.matrix(list(float(img_dict[key]) for key in sorted(img_dict)))
-    return str(response)
-    # MLP.mnist.visualize(response)
+    img_dict = {int(key): float(val) for key, val in request.get_json().items()}
+    response = np.matrix(list(img_dict[key] for key in sorted(img_dict)))
     probs = ensemble.eval(response.T)
     pred = np.argmax(probs)
     return '{} ({:.0f}% certainty)'.format(pred, probs[pred, 0]*100)
