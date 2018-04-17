@@ -5,18 +5,21 @@ import sys
 sys.path.append('backend/')
 
 import MLP
-
+# import MLP.mnist
 
 app = Flask(__name__)
 
-filenames = ['saves/mlp{}'.format(i+1) for i in range(5)]
+filenames = ['backend/saves/mlp{}'.format(i+1) for i in range(5)]
 ensemble = MLP.Ensemble()
 ensemble.load(open(n, 'rb') for n in filenames)
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    response = np.matrix(list(float(item) for item in request.get_json().values()))
+    img_dict = request.get_json()
+    response = np.matrix(list(float(img_dict[key]) for key in sorted(img_dict)))
+    return str(response)
+    # MLP.mnist.visualize(response)
     probs = ensemble.eval(response.T)
     pred = np.argmax(probs)
     return '{} ({:.0f}% certainty)'.format(pred, probs[pred, 0]*100)
