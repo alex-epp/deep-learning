@@ -1,7 +1,7 @@
 import numpy.matlib as np
 import pickle
 
-from MLP.op import MatMul
+from .op import MatMul
 
 class L2Regularization:
     def __init__(self, _lambda):

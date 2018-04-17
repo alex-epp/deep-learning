@@ -1,4 +1,4 @@
-from MLP.MLP import MLP
+from .MLP import MLP
 
 
 class Ensemble:
